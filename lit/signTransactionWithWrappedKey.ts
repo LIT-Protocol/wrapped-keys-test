@@ -13,7 +13,7 @@ import {
 const { signTransactionWithEncryptedKey } = api;
 
 const ETHEREUM_PRIVATE_KEY: string | undefined =
-process.env.NEXT_PUBLIC_ETHEREUM_PRIVATE_KEY;
+  process.env.NEXT_PUBLIC_ETHEREUM_PRIVATE_KEY;
 
 export const signTransactionWithWrappedKey = async (
   pkpPublicKey: string,
@@ -27,7 +27,7 @@ export const signTransactionWithWrappedKey = async (
   try {
     if (!ETHEREUM_PRIVATE_KEY) {
       throw new Error(
-          "Ethereum private key is not defined in environment variables"
+        "Ethereum private key is not defined in environment variables"
       );
     }
     const ethersSigner = new ethers.Wallet(
@@ -37,13 +37,18 @@ export const signTransactionWithWrappedKey = async (
 
     console.log("🔄 Connecting to Lit network...");
     litNodeClient = new LitNodeClient({
-      litNetwork: LitNetwork.DatilDev,
+      litNetwork: LitNetwork.DatilTest,
       debug: false,
     });
     await litNodeClient.connect();
     console.log("✅ Connected to Lit network");
 
     console.log("🔄 Getting PKP Session Sigs...");
+    const { capacityDelegationAuthSig } =
+      await litNodeClient.createCapacityDelegationAuthSig({
+        dAppOwnerWallet: ethersSigner,
+        uses: "1000",
+      });
     const pkpSessionSigs = await litNodeClient.getPkpSessionSigs({
       pkpPublicKey,
       authMethods: [
@@ -59,7 +64,8 @@ export const signTransactionWithWrappedKey = async (
           ability: LitAbility.LitActionExecution,
         },
       ],
-      expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes
+      expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes,
+      capacityDelegationAuthSig,
     });
     console.log("✅ Got PKP Session Sigs");
 
